@@ -15,8 +15,15 @@ function handler(req, res) {
   })
 }
 
-io.sockets.on('connection', function(socket) {
+var chat = io.of('/chat').on('connection', function(socket) {
   socket.on('emit_from_client', function(data) {
+    //socket.io 1.0からはsetプロパティがない！
+    //socket.set('client_name', data.name);
+    /*
+    socket.get('client_name', function(err, name){
+      io.sockets.emit('emit_from_server', '[' + name + '] : ' + data.msg);
+    });
+    */
     //console.log(data);
 
     // 接続してるソケットのみ
@@ -26,6 +33,13 @@ io.sockets.on('connection', function(socket) {
     //socket.broadcast.emit('emit_from_server', 'hello from server: ' + data);
 
     // すべてのソケットに送信
-    io.sockets.emit('emit_from_server', '[' + socket.id + '] : ' + data);
+    //io.sockets.emit('emit_from_server', '[' + name + '] : ' + data.msg);
+    socket.join(data.room);
+    socket.emit('emit_from_server', 'you are in ' + data.room);
+    socket.broadcast.to(data.room).emit('emit_from_server', data.msg);
   });
+});
+
+var news = io.of('/news').on('connection', function(socket){
+  socket.emit('emit_from_server', 'today: ' + new Date());
 });
